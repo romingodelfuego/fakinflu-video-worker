@@ -1,0 +1,16 @@
+{
+  "name": "video",
+  "repo": "romingodelfuego/fakinflu-video-worker",
+  "visibility": "private",
+  "description": "fakinflu RunPod serverless worker: Wan 2.2 Fun Control 14B (ComfyUI 0.34, fp8, models baked) - control video (pose/depth/clay) + character refs -> video",
+  "endpoint": {
+    "name": "fakinflu-video-worker",
+    "env_var": "RUNPOD_VIDEO_ENDPOINT_ID",
+    "gpu_pools": ["AMPERE_48", "ADA_48_PRO"],
+    "workers": {"min": 0, "max": 1, "idleTimeout": 5},
+    "timeout_ms": 1800000,
+    "flashboot": "FLASHBOOT",
+    "disk_gb": 20,
+    "env": {"VIDEO_MAX_INLINE_MB": "7", "VIDEO_JOB_TIMEOUT_S": "1700", "COMFY_LOG_LEVEL": "INFO"}
+  }
+}
