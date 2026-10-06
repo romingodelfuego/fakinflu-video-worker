@@ -2,7 +2,9 @@
 # fakinflu — telecharge les poids Wan 2.2 Fun Control dans un arbre ComfyUI/models.
 # Depot : Comfy-Org/Wan_2.2_ComfyUI_Repackaged (Apache-2.0), EPINGLE sur un commit,
 # chaque fichier verifie par son sha256 (= oid LFS lu via l'API HF).
-# wget est present dans l'image worker-comfyui (curl ne l'est PAS).
+# aria2c (installe par le Dockerfile) : 16 connexions paralleles + reprise. Le build RunPod est
+# limite a 30 min ; en v1.0.0 un expert de 14 Go a mis plus de 25 min en wget mono-connexion.
+# Repli sur wget (present dans l'image worker-comfyui ; curl ne l'est PAS).
 #
 # Usage (un groupe par couche Docker -> couches ~14 Go, pull en parallele) :
 #   MODELS_DIR=/comfyui/models ./download_models.sh high   # expert « high noise » 14B fp8 (14,3 Go)
@@ -20,7 +22,15 @@ DL() {
   local sub="$1" name="$2" sha="$3" dest="$MODELS_DIR/$1/$2"
   mkdir -p "$MODELS_DIR/$sub"
   echo ">> $sub/$name"
-  wget -q -c --tries=5 --timeout=60 -O "$dest" "$BASE/$sub/$name"
+  local t0=$SECONDS
+  if command -v aria2c >/dev/null; then
+    aria2c -q -c -x 16 -s 16 -k 64M --max-tries=10 --retry-wait=5 --timeout=30 \
+           --lowest-speed-limit=1M --file-allocation=none --console-log-level=warn \
+           -d "$MODELS_DIR/$sub" -o "$name" "$BASE/$sub/$name"
+  else
+    wget -q -c --tries=10 --timeout=30 --waitretry=5 -O "$dest" "$BASE/$sub/$name"
+  fi
+  echo "   telecharge en $((SECONDS - t0)) s"
   echo "$sha  $dest" | sha256sum -c --quiet - || { echo "!! sha256 invalide : $dest"; rm -f "$dest"; exit 1; }
 }
 

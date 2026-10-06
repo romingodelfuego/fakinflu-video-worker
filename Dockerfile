@@ -18,6 +18,9 @@ RUN grep -q '"Wan22FunControlToVideo"' /comfyui/comfy_extras/nodes_wan.py \
 # 14B fp8 (2 experts MoE) + umt5 fp8 + VAE 2.1 + LoRA 4 pas : ~38 Go.
 # WITH_5B=1 ajoute Fun Control 5B + VAE 2.2 (~11,4 Go) pour des previews moins cheres.
 ARG WITH_5B=0
+# aria2 : telechargements multi-connexions (cf. download_models.sh, limite de build de 30 min)
+RUN apt-get update && apt-get install -y --no-install-recommends aria2 \
+ && rm -rf /var/lib/apt/lists/*
 COPY download_models.sh /tmp/download_models.sh
 RUN MODELS_DIR=/comfyui/models bash /tmp/download_models.sh high
 RUN MODELS_DIR=/comfyui/models bash /tmp/download_models.sh low
